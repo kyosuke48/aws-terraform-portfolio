@@ -7,7 +7,6 @@ AWSのベストプラクティスに基づき、セキュリティ（SSM・サ�
 ## 🏛️ アーキテクチャ構成図
 
 ![Architecture Diagram](./architecture.png)
-*(※作成した構成図の画像ファイルを `architecture.png` として保存し、プロジェクト直下に配置してください)*
 
 ---
 
@@ -40,7 +39,7 @@ AWSのベストプラクティスに基づき、セキュリティ（SSM・サ�
 | **Cloud** | AWS (VPC, EC2, Elastic IP, IAM, SSM) |
 | **IaC** | Terraform (v1.2+) / AWS Provider (v5.x) |
 | **OS** | Amazon Linux 2023 (Web / AP), AlmaLinux 9 (Monitor) |
-| **Middleware** | Nginx (Proxy), Docker (AP Application), Zabbix Server 7.0 |
+| **Middleware** | Apache (Proxy), GroupSession (AP Application), Zabbix Server 7.0 |
 
 ---
 
