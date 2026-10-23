@@ -1,3 +1,8 @@
+variable "project_name" {
+  type        = string
+  description = "Project Nameを指定します"
+}
+
 variable "region" {
   type    = string
   default = "ap-northeast-1"
@@ -16,10 +21,16 @@ variable "public_subnet_cidr" {
   description = "public_subnetのCIDRブロックを指定します"
 }
 
-variable "private_subnet_cidr" {
+variable "private_ap_subnet_cidr" {
   type    = string
   default = "10.0.2.0/24"
   description = "private_subnetのCIDRブロックを指定します"
+}
+
+variable "private_db_subnet_cidr" {
+  type        = string
+  default     = "10.0.3.0/24"
+  description = "private_db_subnetのCIDRブロックを指定します"
 }
 
 variable "availability_zone" {

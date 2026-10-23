@@ -1,3 +1,8 @@
+variable "project_name" {
+  type        = string
+  description = "Project Name"
+}
+
 variable "vpc_cidr" {
   type        = string
   description = "VPC CIDR"
@@ -8,9 +13,14 @@ variable "public_subnet_cidr" {
   description = "Public Subnet CIDR"
 }
 
-variable "private_subnet_cidr" {
+variable "private_ap_subnet_cidr" {
   type        = string
-  description = "Private Subnet CIDR"
+  description = "Private AP Subnet CIDR"
+}
+
+variable "private_db_subnet_cidr" {
+  type        = string
+  description = "Private DB Subnet CIDR"
 }
 
 variable "availability_zone" {

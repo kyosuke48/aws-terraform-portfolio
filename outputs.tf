@@ -13,7 +13,7 @@ output "ap_private_ip" {
   value       = module.ec2.ap_private_ip
 }
 
-output "zabbix_private_ip" {
-  description = "Zabbix Server Private IP"
-  value       = module.ec2.zabbix_private_ip
+output "db_private_ip" {
+  description = "DB Server Private IP"
+  value       = module.ec2.db_private_ip
 }

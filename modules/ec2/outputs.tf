@@ -10,6 +10,6 @@ output "ap_private_ip" {
   value = aws_instance.ap.private_ip
 }
 
-output "zabbix_private_ip" {
-  value = aws_instance.zabbix.private_ip
+output "db_private_ip" {
+  value = aws_instance.db.private_ip
 }

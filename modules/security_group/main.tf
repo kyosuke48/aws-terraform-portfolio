@@ -1,8 +1,8 @@
 # Web SG (Public)
 resource "aws_security_group" "web" {
-  name        = "web-server-sg"
+  name        = "${var.project_name}-web-sg"
   vpc_id      = var.vpc_id
-  description = "インターネットからのhttp接続及びZabbixによる監視の許可"
+  description = "Security group for Web Server"
 
   ingress {
     from_port   = 80
@@ -11,13 +11,6 @@ resource "aws_security_group" "web" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  ingress {
-    from_port   = 10050
-    to_port     = 10050
-    protocol    = "tcp"
-    cidr_blocks = ["10.0.0.0/16"]
-  }
-
   egress {
     from_port   = 0
     to_port     = 0
@@ -26,15 +19,15 @@ resource "aws_security_group" "web" {
   }
 
   tags = {
-    Name = "portfolio-sg-web"
+    Name = "${var.project_name}-web-sg"
   }
 }
 
 # AP SG (Private) - Web SGからのみ8080許可
 resource "aws_security_group" "ap" {
-  name        = "ap-server-sg"
+  name        = "${var.project_name}-ap-sg"
   vpc_id      = var.vpc_id
-  description = "VPC内のZabbixによる監視の許可"
+  description = "Security group for AP Server"
 
   ingress {
     from_port       = 8080
@@ -43,13 +36,6 @@ resource "aws_security_group" "ap" {
     security_groups = [aws_security_group.web.id]
   }
 
-  ingress {
-    from_port   = 10050
-    to_port     = 10050
-    protocol    = "tcp"
-    cidr_blocks = ["10.0.0.0/16"]
-  }
-
   egress {
     from_port   = 0
     to_port     = 0
@@ -58,21 +44,21 @@ resource "aws_security_group" "ap" {
   }
 
   tags = {
-    Name = "portfolio-sg-ap"
+    Name = "${var.project_name}-ap-sg"
   }
 }
 
-# Zabbix SG (Private) - VPC内(10.0.0.0/16)のみ10050/10051許可
-resource "aws_security_group" "zabbix" {
-  name        = "zabbix-server-sg"
+# DB SG (ap_sg からの 3306/TCP MySQL通信のみ許可)
+resource "aws_security_group" "db" {
+  name        = "${var.project_name}-db-sg"
+  description = "Security group for DB Server"
   vpc_id      = var.vpc_id
-  description = "VPC内のZabbixによる監視の許可"
 
   ingress {
-    from_port   = 10050
-    to_port     = 10051
-    protocol    = "tcp"
-    cidr_blocks = ["10.0.0.0/16"]
+    from_port       = 3306
+    to_port         = 3306
+    protocol        = "tcp"
+    security_groups = [aws_security_group.ap.id]
   }
 
   egress {
@@ -82,7 +68,5 @@ resource "aws_security_group" "zabbix" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = {
-    Name = "portfolio-sg-zabbix"
-  }
+  tags = { Name = "${var.project_name}-db-sg" }
 }

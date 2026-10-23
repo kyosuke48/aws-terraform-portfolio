@@ -2,7 +2,7 @@
 # SSM用 IAM Role & Profile
 # --------------------------------------------------
 resource "aws_iam_role" "ssm" {
-  name = "portfolio-ssm-role"
+  name = "${var.project_name}-ssm-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -24,7 +24,7 @@ resource "aws_iam_role_policy_attachment" "ssm" {
 }
 
 resource "aws_iam_instance_profile" "ssm" {
-  name = "portfolio-ssm-instance-profile"
+  name = "${var.project_name}--ssm-instance-profile"
   role = aws_iam_role.ssm.name
 }
 
@@ -42,17 +42,6 @@ data "aws_ami" "al2023" {
   }
 }
 
-# AlmaLinux 9 (Zabbix Server用)
-data "aws_ami" "almalinux9" {
-  most_recent = true
-  owners      = ["679593333241"] # AlmaLinux Official
-
-  filter {
-    name   = "name"
-    values = ["AlmaLinux OS 9*x86_64*"]
-  }
-}
-
 # --------------------------------------------------
 # EC2 インスタンス
 # --------------------------------------------------
@@ -65,7 +54,7 @@ resource "aws_instance" "web" {
   iam_instance_profile   = aws_iam_instance_profile.ssm.name
 
   tags = {
-    Name = "portfolio-web-server"
+    Name = "${var.project_name}-web-server"
   }
 }
 
@@ -73,25 +62,25 @@ resource "aws_instance" "web" {
 resource "aws_instance" "ap" {
   ami                  = data.aws_ami.al2023.id
   instance_type        = var.instance_type
-  subnet_id            = var.private_subnet_id
+  subnet_id            = var.private_ap_subnet_id
   vpc_security_group_ids = [var.sg_ap_id]
   iam_instance_profile   = aws_iam_instance_profile.ssm.name
 
   tags = {
-    Name = "portfolio-ap-server"
+    Name = "${var.project_name}-ap-server"
   }
 }
 
-# Zabbix Server (Private Subnet)
-resource "aws_instance" "zabbix" {
-  ami                  = data.aws_ami.almalinux9.id
+# DB Server (Private Subnet)
+resource "aws_instance" "db" {
+  ami                  = data.aws_ami.al2023.id
   instance_type        = var.instance_type
-  subnet_id            = var.private_subnet_id
-  vpc_security_group_ids = [var.sg_zabbix_id]
+  subnet_id            = var.private_db_subnet_id
+  vpc_security_group_ids = [var.sg_db_id]
   iam_instance_profile   = aws_iam_instance_profile.ssm.name
 
   tags = {
-    Name = "portfolio-zabbix-server"
+    Name = "${var.project_name}-db-server"
   }
 }
 
@@ -101,6 +90,6 @@ resource "aws_eip" "web" {
   domain   = "vpc"
 
   tags = {
-    Name = "portfolio-web-eip"
+    Name = "${var.project_name}-web-eip"
   }
 }

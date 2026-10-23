@@ -5,7 +5,7 @@ resource "aws_vpc" "main" {
   enable_dns_support = true
 
   tags = {
-    Name = "portfolio-vpc"
+    Name = "${var.project_name}-vpc"
   }
 }
 
@@ -14,7 +14,7 @@ resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
 
   tags = {
-    Name = "portfolio-igw"
+    Name = "${var.project_name}-igw"
   }
 }
 
@@ -26,18 +26,29 @@ resource "aws_subnet" "public" {
   map_public_ip_on_launch = true 
 
   tags = {
-    Name = "portfolio-public-subnet"
+    Name = "${var.project_name}-public-subnet"
   }
 }
 
-# Private Subnet 
-resource "aws_subnet" "private" {
+# Private Subnet (AP)
+resource "aws_subnet" "private_ap" {
   vpc_id                  = aws_vpc.main.id
-  cidr_block              = var.private_subnet_cidr
+  cidr_block              = var.private_ap_subnet_cidr
   availability_zone       = var.availability_zone 
 
   tags = {
-    Name = "portfolio-private-subnet"
+    Name = "${var.project_name}-ap-subnet"
+  }
+}
+
+# Private Subnet (DB)
+resource "aws_subnet" "private_db" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = var.private_db_subnet_cidr
+  availability_zone = var.availability_zone
+
+  tags = {
+    Name = "${var.project_name}-private-db-subnet"
   }
 }
 
@@ -51,7 +62,16 @@ resource "aws_route_table" "public" {
   }
 
   tags = {
-    Name = "portfolio-public-rt"
+    Name = "${var.project_name}-public-rt"
+  }
+}
+
+# Private Route Table
+resource "aws_route_table" "private" {
+  vpc_id = aws_vpc.main.id
+
+  tags = {
+    Name = "${var.project_name}-private-rt"
   }
 }
 
@@ -59,4 +79,14 @@ resource "aws_route_table" "public" {
 resource "aws_route_table_association" "public" {
   subnet_id      = aws_subnet.public.id
   route_table_id = aws_route_table.public.id
+}
+
+resource "aws_route_table_association" "private_ap" {
+  subnet_id      = aws_subnet.private_ap.id
+  route_table_id = aws_route_table.private.id
+}
+
+resource "aws_route_table_association" "private_db" {
+  subnet_id      = aws_subnet.private_db.id
+  route_table_id = aws_route_table.private.id
 }
