@@ -6,7 +6,7 @@ AWSのベストプラクティスに基づき、堅牢なセキュリティ（SS
 
 ## 🏛️ アーキテクチャ構成図
 
-![Architecture Diagram](./architecture.png)
+![Architecture Diagram](./portfolio.png)
 
 ---
 
