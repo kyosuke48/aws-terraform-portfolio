@@ -27,3 +27,9 @@ variable "availability_zone" {
   type        = string
   description = "Availability Zone"
 }
+
+variable "endpoint_sg_id" {
+  description = "Security Group ID for VPC Endpoints"
+  type        = string
+}
+

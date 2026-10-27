@@ -90,3 +90,26 @@ resource "aws_route_table_association" "private_db" {
   subnet_id      = aws_subnet.private_db.id
   route_table_id = aws_route_table.private.id
 }
+
+# --- SSM 用 Interface 型 VPC エンドポイント (3種) ---
+locals {
+  ssm_services = [
+    "com.amazonaws.ap-northeast-1.ssm",
+    "com.amazonaws.ap-northeast-1.ssmmessages",
+    "com.amazonaws.ap-northeast-1.ec2messages"
+  ]
+}
+
+resource "aws_vpc_endpoint" "ssm_endpoints" {
+  for_each            = toset(local.ssm_services)
+  vpc_id              = aws_vpc.main.id
+  service_name        = "com.amazonaws.ap-northeast-1.${replace(each.value, "com.amazonaws.ap-northeast-1.", "")}"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = [aws_subnet.private_ap.id] # APサブネットに配置（同一VPC内から共通で解決可能）
+  security_group_ids  = [var.endpoint_sg_id]
+  private_dns_enabled = true
+
+  tags = {
+    Name = "${var.project_name}-vpc-${replace(each.value, "com.amazonaws.ap-northeast-1.", "")}"
+  }
+}
