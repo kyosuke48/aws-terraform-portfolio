@@ -24,7 +24,7 @@ resource "aws_iam_role_policy_attachment" "ssm" {
 }
 
 resource "aws_iam_instance_profile" "ssm" {
-  name = "${var.project_name}--ssm-instance-profile"
+  name = "${var.project_name}-ssm-instance-profile"
   role = aws_iam_role.ssm.name
 }
 
@@ -45,51 +45,54 @@ data "aws_ami" "al2023" {
 # --------------------------------------------------
 # EC2 インスタンス
 # --------------------------------------------------
-# Web Server (Public Subnet)
-resource "aws_instance" "web" {
+# Web Server (Private Subnet)
+resource "aws_instance" "web_1a" {
   ami                  = data.aws_ami.al2023.id
   instance_type        = var.instance_type
-  subnet_id            = var.public_subnet_id
+  subnet_id            = var.private_web_subnet_1a_id
   vpc_security_group_ids = [var.sg_web_id]
   iam_instance_profile   = aws_iam_instance_profile.ssm.name
 
   tags = {
-    Name = "${var.project_name}-web-server"
+    Name = "${var.project_name}-web-server-1a"
+  }
+}
+
+resource "aws_instance" "web_1c" {
+  ami                  = data.aws_ami.al2023.id
+  instance_type        = var.instance_type
+  subnet_id            = var.private_web_subnet_1c_id
+  vpc_security_group_ids = [var.sg_web_id]
+  iam_instance_profile   = aws_iam_instance_profile.ssm.name
+
+  tags = {
+    Name = "${var.project_name}-web-server-1c"
   }
 }
 
 # AP Server (Private Subnet)
-resource "aws_instance" "ap" {
+resource "aws_instance" "ap_1a" {
   ami                  = data.aws_ami.al2023.id
   instance_type        = var.instance_type
-  subnet_id            = var.private_ap_subnet_id
+  subnet_id            = var.private_ap_subnet_1a_id
   vpc_security_group_ids = [var.sg_ap_id]
   iam_instance_profile   = aws_iam_instance_profile.ssm.name
 
   tags = {
-    Name = "${var.project_name}-ap-server"
+    Name = "${var.project_name}-ap-server-1a"
   }
 }
 
-# DB Server (Private Subnet)
-resource "aws_instance" "db" {
+resource "aws_instance" "ap_1c" {
   ami                  = data.aws_ami.al2023.id
   instance_type        = var.instance_type
-  subnet_id            = var.private_db_subnet_id
-  vpc_security_group_ids = [var.sg_db_id]
+  subnet_id            = var.private_ap_subnet_1c_id
+  vpc_security_group_ids = [var.sg_ap_id]
   iam_instance_profile   = aws_iam_instance_profile.ssm.name
 
   tags = {
-    Name = "${var.project_name}-db-server"
+    Name = "${var.project_name}-ap-server-1c"
   }
 }
 
-# Webサーバー用 Elastic IP
-resource "aws_eip" "web" {
-  instance = aws_instance.web.id
-  domain   = "vpc"
 
-  tags = {
-    Name = "${var.project_name}-web-eip"
-  }
-}

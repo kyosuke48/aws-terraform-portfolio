@@ -3,19 +3,24 @@ variable "project_name" {
   description = "Project Name"
 }
 
-variable "public_subnet_id" {
+variable "private_web_subnet_1a_id" {
   type        = string
-  description = "Public Subnet ID"
+  description = "Private WEB Subnet 1a ID"
 }
 
-variable "private_ap_subnet_id" {
+variable "private_web_subnet_1c_id" {
   type        = string
-  description = "Private AP Subnet ID"
+  description = "Private Web Subnet 1c ID"
 }
 
-variable "private_db_subnet_id" {
+variable "private_ap_subnet_1a_id" {
   type        = string
-  description = "Private DB Subnet ID"
+  description = "Private AP Subnet 1a ID"
+}
+
+variable "private_ap_subnet_1c_id" {
+  type        = string
+  description = "Private AP Subnet 1c ID"
 }
 
 variable "sg_web_id" {
@@ -26,11 +31,6 @@ variable "sg_web_id" {
 variable "sg_ap_id" {
   type        = string
   description = "AP Security Group ID"
-}
-
-variable "sg_db_id" {
-  type        = string
-  description = "DB Security Group ID"
 }
 
 variable "instance_type" {
