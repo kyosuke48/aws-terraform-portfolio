@@ -1,61 +1,52 @@
-# AWS × Terraform Web/AP/DB 3層インフラ基盤ポートフォリオ
+# AWS 高可用性 Web/AP/DB 3層アーキテクチャ（Terraform）
 
-AWSのベストプラクティスに基づき、堅牢なセキュリティ（SSM・サブネット多層分離・最小権限SG）とコスト最適化を両立させた Web/AP/DB の標準的な3層システム基盤をTerraform（IaC）でモジュール化して自動構築したプロジェクトです。
-
----
-
-## 🏛️ アーキテクチャ構成図
-
-![Architecture Diagram](./portfolio.png)
+AWS 上にマルチAZ冗長化、多層防御、および踏み台レスなセキュア運用を組み込んだ 3層アーキテクチャを Terraform（IaC）で構築したポートフォリオです。
 
 ---
 
-## 🎯 設計のポイントとアピール要素
+## 1. システム構成図
 
-### 1. 多層防御を考慮したネットワーク・セキュリティ設計（SAA/SAP基準）
-* **Web / AP / DB サブネットの完全分離**
-  * **Public Subnet (10.0.1.0/24)**: 外部ネットワークからの通信の入り口となる Web 層を配置。
-  * **Private AP Subnet (10.0.2.0/24)**: ビジネスロジックを担う AP 層をインターネットから隔離された閉域網に配置。
-  * **Private DB Subnet (10.0.3.0/24)**: 重要なデータ層は独立した閉域サブネットへ隔離。
-* **22番（SSH）ポートの完全閉塞と AWS SSM Session Manager 導入**
-  * SSH (22/TCP) ポートを開放せず、AWS Systems Manager (SSM) Session Manager 経由でリモートアクセスを制御。
-  * 踏み台（Bastion）サーバー不要とし、管理コスト低減・鍵漏洩リスクの排除を実現。
-* **最小権限のセキュリティグループ（カスケード制御）**
-  * `web-sg`: 外部からの HTTP (80/TCP) 通信を許可。
-  * `ap-sg`: `web-sg` からの通信 (8080/TCP) のみを許可。
-  * `db-sg`: `ap-sg` からの通信 (3306/TCP) のみを許可し、Web層からの直接アクセスは完全遮断。
-
-### 2. 攻撃対象面（Attack Surface）の最小化（Minimal OSアプローチ）
-* 近年多発するミドルウェア・ランタイム層（Webサーバーやプログラミング言語環境等）の緊急脆弱性リスクを鑑み、OS起動時点では不要なパッケージやミドルウェアを含めない**最小構成（Minimal Infrastructure）**を採用。
-* 実運用時はマネージドサービス（Amazon RDS）や構成管理ツール（Ansible/コンテナ）を用いた適切なデプロイラインを前提とし、本ポートフォリオではインフラ基盤（IaC）の再現性に特化。
-
-### 3. Terraform による完全モジュール化（IaC）
-* `vpc` / `security_group` / `ec2` の機能別にモジュールを分離し、高い再利用性と保守性を実現。
-* `data "aws_ami"` を活用し、Amazon Linux 2023 の最新 AMI を自動取得。
+![システム構成図](./portfolio*.png)
 
 ---
 
-## 🛠️ 使用技術・環境
+## 2. アーキテクチャの設計思想と特徴
 
-| 分類 | 採用技術 |
-| :--- | :--- |
-| **Cloud** | AWS (VPC, Subnet, EC2, Elastic IP, IAM, SSM) |
-| **IaC** | Terraform (v1.2+) / AWS Provider (v5.x) |
-| **OS** | Amazon Linux 2023 (Web / AP / DB) |
-| **Security** | IAM Role (AmazonSSMManagedInstanceCore), Security Group |
+### ① Multi-AZ による高可用性（HA）
+- `ap-northeast-1a` と `ap-northeast-1c` の 2 つのアベイラビリティゾーンに Web・AP・DB 層を分散配置。
+- 単一のデータセンター障害が発生した場合でも、サービス継続が可能な耐障害性を確保。
+
+### ② 多層防御（ゼロトラスト志向の閉域化）
+- インターネット境界には ALB（Application Load Balancer）のみを配置。
+- Web・AP・DB はすべてプライベートサブネットに隔離し、前段からの特定ポートのみをセキュリティグループで連鎖的に許可（ALB ➔ Web ➔ AP ➔ DB）。
+
+### ③ ALB による負荷分散と自動切り離し
+- 2台の Web インスタンスへのトラフィック分散。
+- ヘルスチェック（`/` 監視）により、異常インスタンスを検知してトラフィックから自動除外。
+
+### ④ RDS Multi-AZ による耐障害性とデータ保護
+- Primary（1a）から Standby（1c）への**同期レプリケーション**を確立。
+- 定常時は両 AP サーバから Primary へアクセスし、障害発生時は自動フェイルオーバーによってダウンタイムを最小化。
+
+### ⑤ 踏み台レス・セキュアな運用管理
+- インターネットに露出する踏み台 EC2 や SSH 鍵の管理を排除。
+- **AWS Systems Manager (SSM) Session Manager** および Interface 型 VPC エンドポイント（ssm, ssmmessages, ec2messages）経由で、閉域内の AP サーバへ安全にアクセス。
+- RDS のメンテナンス時は、AP サーバを中継点とした SSM ポートフォワーディングにより、ローカル端末から安全に接続可能。
 
 ---
 
-## 📂 ディレクトリ構造
+## 3. ディレクトリ構成
 
-```text
+Terraform コードは責務ごとにモジュール分割し、保守性・再利用性を高めています。
+
 terraform/
-├── main.tf              # モジュール結合・メイン定義
-├── variables.tf         # ルート変数定義
-├── terraform.tfvars     # パラメータ設定値
-├── providers.tf         # AWSプロバイダー設定
-├── outputs.tf           # 構築後のIPアドレス等の出力定義
+├── main.tf                  # 各モジュールの呼び出し・結合
+├── variables.tf             # 共通変数定義
+├── outputs.tf               # 作成リソースの出力（ALB DNS名、IP等）
+├── terraform.tfvars         # 環境固有の変数値
 └── modules/
-    ├── vpc/             # VPC, Subnet (Public/AP/DB), Route Table定義
-    ├── security_group/  # Web / AP / DB 用階層型SG定義
-    └── ec2/             # IAM Role(SSM), EC2(3台), EIP定義
+    ├── vpc/                 # 8サブネット（Public/Web/AP/DB × 2AZ）+ IGW + ルートテーブル
+    ├── security_group/      # 各層のセキュリティグループ（チェーン構造）
+    ├── alb/                 # ALB本体、ターゲットグループ、リスナー
+    ├── ec2/                 # Web/AP インスタンス、IAMロール、SSM VPCエンドポイント
+    └── rds/                 # DBサブネットグループ、RDS Multi-AZ インスタンス
