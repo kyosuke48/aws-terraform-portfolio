@@ -39,6 +39,7 @@ AWS 上にマルチAZ冗長化、多層防御、および踏み台レスなセ�
 
 Terraform コードは責務ごとにモジュール分割し、保守性・再利用性を高めています。
 
+```text
 terraform/
 ├── main.tf              # 各モジュールの呼び出し・結合
 ├── variables.tf         # 共通変数定義
@@ -50,3 +51,4 @@ terraform/
     ├── alb/             # ALB本体、ターゲットグループ、リスナー
     ├── ec2/             # Web/AP インスタンス、IAMロール、SSM VPCエンドポイント
     └── rds/             # DBサブネットグループ、RDS Multi-AZ インスタンス
+```
