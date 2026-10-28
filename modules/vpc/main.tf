@@ -18,37 +18,95 @@ resource "aws_internet_gateway" "main" {
   }
 }
 
-# Public Subnet
-resource "aws_subnet" "public" {
+# Public Subnet(ALB)
+resource "aws_subnet" "public_1a" {
   vpc_id                  = aws_vpc.main.id
-  cidr_block              = var.public_subnet_cidr
-  availability_zone       = var.availability_zone
+  cidr_block              = var.public_subnet_1a_cidr
+  availability_zone       = var.az_1a
   map_public_ip_on_launch = true 
 
   tags = {
-    Name = "${var.project_name}-public-subnet"
+    Name = "${var.project_name}-public-subnet-1a"
+  }
+}
+
+resource "aws_subnet" "public_1c" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = var.public_subnet_1c_cidr
+  availability_zone       = var.az_1c
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name = "${var.project_name}-public-subnet-1c"
+  }
+}
+
+# Private Subnet (WEB)
+resource "aws_subnet" "private_web_1a" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = var.private_web_subnet_1a_cidr
+  availability_zone       = var.az_1a
+  map_public_ip_on_launch = false
+
+  tags = {
+    Name = "${var.project_name}-private-web-subnet-1a"
+  }
+}
+
+resource "aws_subnet" "private_web_1c" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = var.private_web_subnet_1c_cidr
+  availability_zone       = var.az_1c
+  map_public_ip_on_launch = false
+
+  tags = {
+    Name = "${var.project_name}-private-web-subnet-1c"
   }
 }
 
 # Private Subnet (AP)
-resource "aws_subnet" "private_ap" {
+resource "aws_subnet" "private_ap_1a" {
   vpc_id                  = aws_vpc.main.id
-  cidr_block              = var.private_ap_subnet_cidr
-  availability_zone       = var.availability_zone 
+  cidr_block              = var.private_ap_subnet_1a_cidr
+  availability_zone       = var.az_1a
+  map_public_ip_on_launch = false
 
   tags = {
-    Name = "${var.project_name}-ap-subnet"
+    Name = "${var.project_name}-private-ap-subnet-1a"
+  }
+}
+
+resource "aws_subnet" "private_ap_1c" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = var.private_ap_subnet_1c_cidr
+  availability_zone       = var.az_1c
+  map_public_ip_on_launch = false
+
+  tags = {
+    Name = "${var.project_name}-private-ap-subnet-1c"
   }
 }
 
 # Private Subnet (DB)
-resource "aws_subnet" "private_db" {
+resource "aws_subnet" "private_db_1a" {
   vpc_id            = aws_vpc.main.id
-  cidr_block        = var.private_db_subnet_cidr
-  availability_zone = var.availability_zone
+  cidr_block        = var.private_db_subnet_1a_cidr
+  availability_zone = var.az_1a
+  map_public_ip_on_launch = false
 
   tags = {
-    Name = "${var.project_name}-private-db-subnet"
+    Name = "${var.project_name}-private-db-subnet-1a"
+  }
+}
+
+resource "aws_subnet" "private_db_1c" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = var.private_db_subnet_1c_cidr
+  availability_zone = var.az_1c
+  map_public_ip_on_launch = false
+
+  tags = {
+    Name = "${var.project_name}-private-db-subnet-1c"
   }
 }
 
@@ -76,18 +134,47 @@ resource "aws_route_table" "private" {
 }
 
 # Route Table Association
-resource "aws_route_table_association" "public" {
-  subnet_id      = aws_subnet.public.id
+# Public
+resource "aws_route_table_association" "public_1a" {
+  subnet_id      = aws_subnet.public_1a.id
   route_table_id = aws_route_table.public.id
 }
 
-resource "aws_route_table_association" "private_ap" {
-  subnet_id      = aws_subnet.private_ap.id
+resource "aws_route_table_association" "public_1c" {
+  subnet_id      = aws_subnet.public_1c.id
+  route_table_id = aws_route_table.public.id
+}
+
+# Private WEB
+resource "aws_route_table_association" "private_web_1a" {
+  subnet_id      = aws_subnet.private_web_1a.id
   route_table_id = aws_route_table.private.id
 }
 
-resource "aws_route_table_association" "private_db" {
-  subnet_id      = aws_subnet.private_db.id
+resource "aws_route_table_association" "private_web_1c" {
+  subnet_id      = aws_subnet.private_web_1c.id
+  route_table_id = aws_route_table.private.id
+}
+
+# Private AP
+resource "aws_route_table_association" "private_ap_1a" {
+  subnet_id      = aws_subnet.private_ap_1a.id
+  route_table_id = aws_route_table.private.id
+}
+
+resource "aws_route_table_association" "private_ap_1c" {
+  subnet_id      = aws_subnet.private_ap_1c.id
+  route_table_id = aws_route_table.private.id
+}
+
+# Private DB
+resource "aws_route_table_association" "private_db_1a" {
+  subnet_id      = aws_subnet.private_db_1a.id
+  route_table_id = aws_route_table.private.id
+}
+
+resource "aws_route_table_association" "private_db_1c" {
+  subnet_id      = aws_subnet.private_db_1c.id
   route_table_id = aws_route_table.private.id
 }
 
@@ -103,9 +190,9 @@ locals {
 resource "aws_vpc_endpoint" "ssm_endpoints" {
   for_each            = toset(local.ssm_services)
   vpc_id              = aws_vpc.main.id
-  service_name        = "com.amazonaws.ap-northeast-1.${replace(each.value, "com.amazonaws.ap-northeast-1.", "")}"
+  service_name        = each.value
   vpc_endpoint_type   = "Interface"
-  subnet_ids          = [aws_subnet.private_ap.id] # APサブネットに配置（同一VPC内から共通で解決可能）
+  subnet_ids          = [aws_subnet.private_ap_1a.id] # APサブネットに配置（同一VPC内から共通で解決可能）
   security_group_ids  = [var.endpoint_sg_id]
   private_dns_enabled = true
 
