@@ -51,9 +51,9 @@ resource "aws_lb_listener" "http" {
 
 #Target Group Attachments
 resource "aws_lb_target_group_attachment" "web" {
-  for_each         = toset(var.web_instance_ids)
+  count            = length(var.web_instance_ids)
   target_group_arn = aws_lb_target_group.web.arn
-  target_id        = each.value
+  target_id        = var.web_instance_ids[count.index]
   port             = 80
 }
 
